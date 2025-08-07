@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_con_init
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: f_13_03_25_db
+    volumes:
+      - ./13_03_25/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5436:5432"
+
+
