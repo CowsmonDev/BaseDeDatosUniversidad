@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/05_12_24/resolucion.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/13_03_25/init/0_create_tables.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/13_03_25/init/1_inserts.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/13_03_25/resolucion.sql" dialect="PostgreSQL" />
