@@ -178,10 +178,127 @@ TODO: 2.c) Sobre el esquema dado se requiere definir la siguiente vista, de mane
 
     - V3: que contenga los datos de los cultivos que han tenido el mayor promedio de cantidad vendida el año actual.
 */
+CREATE VIEW V3 AS
+SELECT *
+FROM cultivo
+WHERE id_cultivo IN (SELECT id_cultivo
+                     FROM (SELECT id_cultivo,
+                                  avg(cantidad_vendida) as promedio_por_cultivo
+                           FROM venta
+                           WHERE extract(year from current_date) = extract(year from fecha_venta)
+                           GROUP BY id_cultivo) promedios
+                     WHERE promedio_por_cultivo = (SELECT MAX(promedio_por_cultivo)
+                                                   FROM (SELECT avg(cantidad_vendida) as promedio_por_cultivo
+                                                         FROM venta
+                                                         WHERE extract(year from current_date) = extract(year from fecha_venta)
+                                                         GROUP BY id_cultivo) max_promedio));
 
-select
-    id_cultivo,
-    avg(cantidad_vendida)
-    from venta
-    where extract(year from current_date) = extract(year from fecha_venta)
-group by id_cultivo
+/*3) Para el esquema dado, se ha creado la tabla cultivos_agricultor donde se requiere registrar la siguiente información para todos los agricultores que están registrados en la base:
+    id_agricultor, nombre, fecha_registro, cantidad_cultivos, fecha_ultima_siembra donde, para cada agricultor:
+        - cantidad_cultivos corresponde a la cantidad de cultivos que registra
+        - fecha_ultima_siembra es la fecha correspondiente a la última siembra que realizó
+Nota: en caso que un agricultor no registre cultivos, se deberá indicar apropiadamente.
+
+TODO: a) Implemente el método más adecuado en PostgreSQL que permita completar dicha tabla con la información de todos los agricultores a partir de los datos existentes en la base. Explique su solución e incluya la sentencia que debería utilizar un usuario para la ejecución del mismo. Nota: no puede utilizar sentencias de bucle (for, loop, etc.) para resolverlo.
+ */
+
+DROP TABLE cultivos_agricultor;
+CREATE TABLE cultivos_agricultor
+(
+    id_agricultor        int          NOT NULL,
+    nombre               varchar(100) NOT NULL,
+    fecha_registro       date         NULL,
+    cantidad_cultivos    int          NOT NULL,
+    fecha_ultima_siembra date         NULL
+);
+
+CREATE OR REPLACE PROCEDURE pg_cultivos_agricultor()
+    language plpgsql as
+$$
+begin
+    delete from cultivos_agricultor where true;
+
+    insert into cultivos_agricultor
+    select id_agricultor,
+           nombre,
+           fecha_registro,
+           count(id_cultivo)    cantidad_cultivos,
+           max(c.fecha_siembra) fecha_ultima_siembra
+    from agricultor a
+             left join cultivo c using (id_agricultor)
+    group by id_agricultor, nombre, fecha_registro;
+end;
+$$;
+
+delete
+from cultivos_agricultor
+where true;
+select *
+from cultivos_agricultor;
+call pg_cultivos_agricultor();
+
+/*
+3.b) Indique y justifique todos los eventos críticos necesarios para mantener los datos actualizados en la tabla cultivos_agricultor cuando se produzcan actualizaciones en la base. Incluya la declaración de los triggers correspondientes en PostgreSQL y escriba la implementación de la/s función/es requerida/s para operaciones de insert.
+*/
+
+
+-- Resolucion, Eventos Criticos:
+-- TODO: Agricultor
+-- INSERT: se debe insertar en cultivos_agricultor cuando se agrega un nuevo agricultor, este agricultor va a tener fecha null y cantidad_cultivos 0
+-- DELETE: asumimos que existe una foreign key
+-- UPDATE: si se cambia el nombre o la fecha de registro
+-- TODO: cultivo
+-- INSERT: si se agrega un nuevo cultivo hay que incrementar un cultivo al agricultor y volver a revisar la fecha de la ultima siembra
+-- UPDATE: si se modifica la fecha de siembra hay que verificar si existe un cultivo mas reciente, si se modifica el agricultor hay que modificar
+-- DELETE: si se elimina un cultivo hay que restarle un elemento a la cantidad de cultivos al agricultor afectado
+
+CREATE OR REPLACE FUNCTION fn_modify_agricultor_to_agricultor_cultivo() returns trigger as
+$$
+begin
+    if (tg_op = 'INSERT') then
+        INSERT INTO cultivos_agricultor(id_agricultor, nombre, fecha_registro, cantidad_cultivos, fecha_ultima_siembra)
+        values (new.id_agricultor, new.nombre, new.fecha_registro, 0, null);
+    end if;
+    if (tg_op = 'UPDATE') then
+        UPDATE cultivos_agricultor
+        set nombre         = new.nombre,
+            fecha_registro = new.fecha_registro
+        where id_agricultor = new.id_agricultor;
+    end if;
+end;
+$$ language plpgsql;
+
+CREATE OR REPLACE TRIGGER tg_modify_agricultor_to_agricultor_cultivo
+    after insert or update of nombre, fecha_registro
+    on agricultor
+    for each row
+execute function fn_modify_agricultor_to_agricultor_cultivo();
+
+CREATE OR REPLACE FUNCTION fn_modify_cultivo_to_agricultor_cultivo() returns trigger as
+$$
+DECLARE
+    cultivo_agricultor_existente RECORD;
+begin
+    if (tg_op = 'INSERT' or tg_op = 'UPDATE') then
+        UPDATE cultivos_agricultor
+        set cantidad_cultivos    = (select cantidad_cultivos
+                                    from cultivos_agricultor
+                                    where id_agricultor = old.id_agricultor),
+            fecha_ultima_siembra = (select max(fecha_siembra) from cultivo where id_agricultor = new.id_agricultor);
+    elseif (tg_op = 'DELETE' or tg_op = 'UPDATE') then
+        UPDATE cultivos_agricultor
+        set cantidad_cultivos    = (select cantidad_cultivos
+                                    from cultivos_agricultor
+                                    where id_agricultor = old.id_agricultor),
+            fecha_ultima_siembra = (select max(fecha_siembra) from cultivo where id_agricultor = old.id_agricultor);
+    end if;
+
+
+end;
+$$ language plpgsql;
+
+CREATE OR REPLACE TRIGGER  tg_modify_cultivo_to_agricultor_cultivo
+    after INSERT or DELETE or UPDATE of fecha_siembra, id_agricultor
+    on cultivo
+    for each row
+    EXECUTE function fn_modify_cultivo_to_agricultor_cultivo();

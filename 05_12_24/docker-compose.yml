@@ -1,16 +1,6 @@
 version: '3.8'
 
 services:
-  data_generator:
-    build: ./python-generator
-    container_name: data_generator
-    volumes:
-      - shared_data:/app/output
-    environment:
-      - OUTPUT_DIR=/app/output
-    # El contenedor se ejecuta una vez y termina
-    restart: "no"
-
   f_05_12_24:
     image: postgres:16
     container_name: f_05_12_24
@@ -19,16 +9,6 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: f_05_12_24_db
     volumes:
-      # Tu archivo existente de creación de tablas
-      - ./init/0_create_tables.sql:/docker-entrypoint-initdb.d/0_create_tables.sql
-      # Archivo generado de inserts (directamente en la raíz)
-      - shared_data:/docker-entrypoint-initdb.d
+      - ./init:/docker-entrypoint-initdb.d
     ports:
       - "5436:5432"
-    # PostgreSQL espera a que el generador termine
-    depends_on:
-      data_generator:
-        condition: service_completed_successfully
-
-volumes:
-  shared_data:
