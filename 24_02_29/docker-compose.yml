@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  f_24_02_29:
+    image: postgres:16
+    container_name: f_24_02_29
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: f_24_02_29_db
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+    ports:
+      - "5436:5432"

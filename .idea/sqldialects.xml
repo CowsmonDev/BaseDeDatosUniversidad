@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
-    <file url="file://$PROJECT_DIR$/05_12_24/init/1_inserts.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/05_12_24/resolucion.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/13_03_25/init/0_create_tables.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/13_03_25/init/1_inserts.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/13_03_25/resolucion.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/24_02_29/init/1_inserts.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/24_02_29/resolucion.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/24_12_05/init/1_inserts.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/24_12_05/resolucion.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/25_03_13/init/0_create_tables.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/25_03_13/init/1_inserts.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/25_03_13/resolucion.sql" dialect="PostgreSQL" />
   </component>
 </project>
